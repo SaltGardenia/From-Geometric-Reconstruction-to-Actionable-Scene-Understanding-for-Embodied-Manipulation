@@ -302,10 +302,10 @@ body {
 .toc {
   position: fixed;
   top: 50%;
-  left: 1.5rem;
+  left: calc(50% - 563px - 200px);
   transform: translateY(-50%);
   z-index: 50;
-  max-width: 200px;
+  width: 180px;
   padding-left: 1rem;
   border-left: 2px solid #ececec;
 }
@@ -420,7 +420,7 @@ body {
   scroll-margin-top: 1.25rem;
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1549px) {
   .toc {
     display: none;
   }

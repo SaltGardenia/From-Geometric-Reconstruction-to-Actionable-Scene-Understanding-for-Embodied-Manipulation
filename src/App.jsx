@@ -156,19 +156,41 @@ export default function App() {
   const [activeId, setActiveId] = useState(SECTIONS[0].id);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveId(entry.target.id);
-        });
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
-    );
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const threshold = window.innerHeight * 0.3;
+      const scrolledToBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 2;
+      let current = SECTIONS[0].id;
+      if (scrolledToBottom) {
+        current = SECTIONS[SECTIONS.length - 1].id;
+      } else {
+        for (const s of SECTIONS) {
+          const el = document.getElementById(s.id);
+          if (el && el.getBoundingClientRect().top - threshold <= 0) {
+            current = s.id;
+          } else {
+            break;
+          }
+        }
+      }
+      setActiveId(current);
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   return (
