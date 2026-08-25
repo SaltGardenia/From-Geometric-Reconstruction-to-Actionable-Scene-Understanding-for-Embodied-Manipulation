@@ -1,11 +1,43 @@
 import "./App.css";
+import { useState } from "react";
 
 const PAPER_PDF = "/main.pdf";
 const ARXIV_URL = "https://arxiv.org/abs/0000.00000";
 const CODE_URL = "https://github.com/";
 
+const BIBTEX = `@article{li2026actionable,
+  title={From Geometric Reconstruction to Actionable Scene Understanding for Embodied Manipulation: A Survey},
+  author={Li, Yaze and Xie, Xinyu and Ma, Jiawei and Song, Siying and Xiao, Haihong},
+  journal={arXiv preprint},
+  year={2026}
+}`;
+
 function fig(name) {
   return `/figures/${name}.png`;
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <button className="copy-btn" onClick={onCopy} type="button">
+      <ion-icon name={copied ? "checkmark-outline" : "copy-outline"}></ion-icon>
+      {copied ? " Copied" : " Copy"}
+    </button>
+  );
 }
 
 function PdfFigure({ src, caption }) {
@@ -93,7 +125,7 @@ export default function App() {
           <span className="icon-text mx-1">
             <a className="button is-dark" href="#citation" rel="noreferrer">
               <span className="icon">
-                <ion-icon name="quote-outline"></ion-icon>
+                <ion-icon name="copy-outline"></ion-icon>
               </span>
               <span> Cite </span>
             </a>
@@ -277,18 +309,14 @@ export default function App() {
         />
 
         {/* Citation */}
-        <div className="card mt-6" id="citation">
+        <div className="card mt-6 cite-card" id="citation">
           <header className="card-header">
             <p className="card-header-title">Citation</p>
+            <CopyButton text={BIBTEX} />
           </header>
           <div className="card-content has-text-left">
             <pre className="bibtex">
-              <code>{`@article{li2026actionable,
-  title={From Geometric Reconstruction to Actionable Scene Understanding for Embodied Manipulation: A Survey},
-  author={Li, Yaze and Xie, Xinyu and Ma, Jiawei and Song, Siying and Xiao, Haihong},
-  journal={arXiv preprint},
-  year={2026}
-}`}</code>
+              <code>{BIBTEX}</code>
             </pre>
           </div>
         </div>
