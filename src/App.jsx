@@ -1,6 +1,19 @@
 import "./App.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TABLES } from "./tables-data";
+
+const SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "abstract", label: "Abstract" },
+  { id: "datasets", label: "Datasets & Evaluation" },
+  { id: "geometric", label: "Geometric Reconstruction" },
+  { id: "semantic", label: "Semantic Understanding" },
+  { id: "physical", label: "Physical & Functional" },
+  { id: "executable", label: "Executable Manipulation" },
+  { id: "future", label: "Conclusion & Future" },
+  { id: "tables", label: "Comparison Tables" },
+  { id: "citation", label: "Citation" },
+];
 
 const PAPER_PDF = "/main.pdf";
 const ARXIV_URL = "https://arxiv.org/abs/0000.00000";
@@ -56,8 +69,12 @@ function PdfFigure({ src, caption }) {
   );
 }
 
-function SectionTitle({ children }) {
-  return <p className="title is-3 mt-6 has-text-centered section-title">{children}</p>;
+function SectionTitle({ id, children }) {
+  return (
+    <p id={id} className="title is-3 mt-6 has-text-centered section-title">
+      {children}
+    </p>
+  );
 }
 
 function SectionIntro({ children }) {
@@ -81,9 +98,77 @@ function TableFigure({ index, src, caption }) {
   );
 }
 
-export default function App() {
+function Toc({ sections, activeId }) {
   return (
-    <section className="section">
+    <nav className="toc" aria-label="Table of contents">
+      <span className="toc__title">Contents</span>
+      <ul>
+        {sections.map((s) => (
+          <li key={s.id}>
+            <a
+              href={`#${s.id}`}
+              className={activeId === s.id ? "is-active" : ""}
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById(s.id)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              <span className="toc__dot" />
+              <span className="toc__label">{s.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function BackToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <button
+      type="button"
+      className={`back-to-top${show ? " is-visible" : ""}`}
+      aria-label="Back to top"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    >
+      <ion-icon name="arrow-up-outline"></ion-icon>
+    </button>
+  );
+}
+
+export default function App() {
+  const [activeId, setActiveId] = useState(SECTIONS[0].id);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        });
+      },
+      { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
+    );
+    SECTIONS.forEach((s) => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <Toc sections={SECTIONS} activeId={activeId} />
+      <BackToTop />
+      <section className="section">
       <div className="container has-text-centered">
         <p className="title is-3 paper-title">
           From Geometric Reconstruction to Actionable Scene Understanding for
@@ -153,6 +238,7 @@ export default function App() {
 
       <div className="container is-max-desktop has-text-centered">
         {/* Framework overview */}
+        <div id="overview" className="anchor-section">
         <PdfFigure
           label="Unified Framework"
           src={fig("fig_framework")}
@@ -178,9 +264,10 @@ export default function App() {
             </span>
           }
         />
+        </div>
 
         {/* Abstract */}
-        <SectionTitle>Abstract</SectionTitle>
+        <SectionTitle id="abstract">Abstract</SectionTitle>
         <p className="content is-size-6 has-text-left abstract">
           Recent advances in 3D vision and embodied intelligence are driving a
           transition in indoor scene understanding from geometric reconstruction
@@ -206,7 +293,7 @@ export default function App() {
         </p>
 
         {/* Datasets and Evaluation */}
-        <SectionTitle>Datasets &amp; Evaluation Metrics</SectionTitle>
+        <SectionTitle id="datasets">Datasets &amp; Evaluation Metrics</SectionTitle>
         <SectionIntro>
           We review representative indoor scene datasets and the evaluation
           protocols that measure each capability layer, from geometric and
@@ -214,7 +301,7 @@ export default function App() {
         </SectionIntro>
 
         {/* Geometric Reconstruction */}
-        <SectionTitle>Geometric Reconstruction</SectionTitle>
+        <SectionTitle id="geometric">Geometric Reconstruction</SectionTitle>
         <SectionIntro>
           We categorize indoor scene reconstruction into offline, feed-forward,
           and online paradigms, tracing their chronological evolution from
@@ -238,7 +325,7 @@ export default function App() {
         />
 
         {/* Semantic Understanding */}
-        <SectionTitle>Semantic Understanding</SectionTitle>
+        <SectionTitle id="semantic">Semantic Understanding</SectionTitle>
         <SectionIntro>
           Reconstructed geometry is progressively transformed into structured
           semantic representations—from object-level perception and relational
@@ -264,7 +351,7 @@ export default function App() {
         />
 
         {/* Physical and Functional Understanding */}
-        <SectionTitle>Physical &amp; Functional Understanding</SectionTitle>
+        <SectionTitle id="physical">Physical &amp; Functional Understanding</SectionTitle>
         <SectionIntro>
           Beyond appearance and semantics, agents must reason about physical
           properties, affordances, interaction consequences, and physical
@@ -288,7 +375,7 @@ export default function App() {
         />
 
         {/* Executable Embodied Manipulation */}
-        <SectionTitle>Executable Embodied Manipulation</SectionTitle>
+        <SectionTitle id="executable">Executable Embodied Manipulation</SectionTitle>
         <SectionIntro>
           The upper layers integrate multimodal reasoning, spatial and task-level
           decision making, action generation, and predictive modeling into unified
@@ -312,7 +399,7 @@ export default function App() {
         />
 
         {/* Future Directions */}
-        <SectionTitle>Conclusion &amp; Future Directions</SectionTitle>
+        <SectionTitle id="future">Conclusion &amp; Future Directions</SectionTitle>
         <SectionIntro>
           We highlight four emerging directions that point toward physically
           grounded and human-centered scene representations.
@@ -328,7 +415,7 @@ export default function App() {
 
         {/* Citation */}
         {/* Comparison Tables */}
-        <SectionTitle>Comparison Tables</SectionTitle>
+        <SectionTitle id="tables">Comparison Tables</SectionTitle>
         <SectionIntro>
           We summarize representative datasets, evaluation metrics, and method
           comparisons across the four capability layers of this survey.
@@ -355,5 +442,6 @@ export default function App() {
         </p>
       </div>
     </section>
+    </>
   );
 }
