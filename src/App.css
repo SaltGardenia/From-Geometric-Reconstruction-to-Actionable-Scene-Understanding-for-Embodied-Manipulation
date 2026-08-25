@@ -131,6 +131,53 @@ body {
 
 .paper-table__body {
   background: #ffffff;
+  overflow-x: auto;
+}
+
+.paper-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+.paper-table thead th {
+  background: #f8fafc;
+  padding: 9px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+.paper-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.paper-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.paper-table tbody tr:nth-child(even) {
+  background: #fcfcfd;
+}
+
+.paper-table tbody tr:nth-child(even):hover {
+  background: #f1f5f9;
+}
+
+.paper-table .pos {
+  color: #16a34a;
+  margin-right: 4px;
+}
+
+.paper-table .cell {
+  display: inline;
 }
 
 .paper-table__body img {

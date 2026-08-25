@@ -1,6 +1,6 @@
 import "./App.css";
 import { useEffect, useState } from "react";
-import { TABLES } from "./tables-data";
+import { TABLES_HTML } from "./tables-html";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
@@ -69,6 +69,30 @@ function PdfFigure({ src, caption }) {
   );
 }
 
+function HtmlTable({ table }) {
+  return (
+    <figure className="paper-table">
+      <div className="paper-table__head">Table {table.index}</div>
+      <div
+        className="paper-table__body"
+        dangerouslySetInnerHTML={{ __html: table.html }}
+      />
+      {table.caption && (
+        <figcaption
+          className="paper-table__caption content is-size-6 has-text-left"
+          dangerouslySetInnerHTML={{ __html: table.caption }}
+        />
+      )}
+    </figure>
+  );
+}
+
+function TablesForSection({ section }) {
+  return TABLES_HTML.filter((t) => t.section === section).map((t) => (
+    <HtmlTable key={t.index} table={t} />
+  ));
+}
+
 function SectionTitle({ id, children }) {
   return (
     <p id={id} className="title is-3 mt-6 has-text-centered section-title">
@@ -79,23 +103,6 @@ function SectionTitle({ id, children }) {
 
 function SectionIntro({ children }) {
   return <p className="content has-text-centered is-size-5 section-intro">{children}</p>;
-}
-
-function TableFigure({ index, src, caption }) {
-  return (
-    <figure className="paper-table">
-      <div className="paper-table__head">Table {index}</div>
-      <div className="paper-table__body">
-        <img src={src} alt={caption || `Table ${index}`} loading="lazy" />
-      </div>
-      {caption && (
-        <figcaption
-          className="paper-table__caption content is-size-6 has-text-left"
-          dangerouslySetInnerHTML={{ __html: caption }}
-        />
-      )}
-    </figure>
-  );
 }
 
 function Toc({ sections, activeId }) {
@@ -299,6 +306,7 @@ export default function App() {
           protocols that measure each capability layer, from geometric and
           semantic accuracy to physical plausibility and task-level success.
         </SectionIntro>
+        <TablesForSection section="datasets" />
 
         {/* Geometric Reconstruction */}
         <SectionTitle id="geometric">Geometric Reconstruction</SectionTitle>
@@ -332,6 +340,7 @@ export default function App() {
           modeling to open-vocabulary understanding and unified
           geometry–semantic representations.
         </SectionIntro>
+        <TablesForSection section="semantic" />
         <PdfFigure
           label="Semantic Evolution"
           src={fig("semantic_evo")}
@@ -357,6 +366,7 @@ export default function App() {
           properties, affordances, interaction consequences, and physical
           consistency to act reliably in the real world.
         </SectionIntro>
+        <TablesForSection section="physical" />
         <PdfFigure
           label="Pipeline"
           src={fig("fig4b")}
@@ -381,6 +391,7 @@ export default function App() {
           decision making, action generation, and predictive modeling into unified
           embodied agents that close the perception–action loop.
         </SectionIntro>
+        <TablesForSection section="embodied" />
         <PdfFigure
           label="Embodied Intelligence"
           src={fig("fig_embodied_intelligence")}
@@ -414,15 +425,7 @@ export default function App() {
         />
 
         {/* Citation */}
-        {/* Comparison Tables */}
-        <SectionTitle id="tables">Comparison Tables</SectionTitle>
-        <SectionIntro>
-          We summarize representative datasets, evaluation metrics, and method
-          comparisons across the four capability layers of this survey.
-        </SectionIntro>
-        {TABLES.map((t, i) => (
-          <TableFigure key={i} index={i + 1} src={t.src} caption={t.caption} />
-        ))}
+        {/* Comparison Tables (rendered as HTML in their sections above) */}
 
         <div className="card mt-6 cite-card" id="citation">
           <header className="card-header">
