@@ -49,12 +49,113 @@ function sanitizeTableBody(s) {
     .replace(/\\label\{([^}]*)\}/g, ""); // drop labels
 }
 
+// Drop table floats so only "global" definitions are collected.
+function removeTableRegions(text) {
+  const lines = text.split("\n");
+  const res = [];
+  let inside = false;
+  for (const l of lines) {
+    const tl = l.trim();
+    if (/^%/.test(tl)) {
+      res.push(l);
+      continue;
+    }
+    if (/\\begin\{table\*?\}/.test(l)) {
+      inside = true;
+      continue;
+    }
+    if (/\\end\{table\*?\}/.test(l)) {
+      inside = false;
+      continue;
+    }
+    if (!inside) res.push(l);
+  }
+  return res.join("\n");
+}
+
+// Collect every custom \newcommand / \definecolor / etc. from the body,
+// keeping the last definition per name (mirrors how the full paper resolves).
+// \newcommand/\renewcommand are rewritten to \providecommand so duplicates
+// with the package preamble never abort the compile.
+function scanDefs(text) {
+  const defs = new Map();
+  const re = /\\(newcommand|renewcommand|providecommand|newcolumntype|definecolor|def)\*?/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const start = m.index;
+    const macro = m[1];
+    let p = re.lastIndex;
+    while (p < text.length && /\s/.test(text[p])) p++;
+    let name;
+    if (macro === "def") {
+      if (text[p] !== "\\") continue;
+      let q = p + 1;
+      while (q < text.length && /[a-zA-Z]/.test(text[q])) q++;
+      name = text.slice(p + 1, q);
+      p = q;
+      while (p < text.length && text[p] === "#") {
+        p++;
+        while (p < text.length && /[0-9]/.test(text[p])) p++;
+      }
+    } else {
+      if (text[p] !== "{") continue;
+      let q = p + 1;
+      let depth = 1;
+      let nameTok = "";
+      while (q < text.length && depth > 0) {
+        const c = text[q];
+        if (c === "{") depth++;
+        else if (c === "}") {
+          depth--;
+          if (depth === 0) break;
+        }
+        nameTok += c;
+        q++;
+      }
+      name = nameTok.replace(/^\\/, "");
+      p = q + 1;
+    }
+    if (macro === "definecolor") {
+      let grp = "";
+      for (let k = 0; k < 2; k++) {
+        while (p < text.length && /\s/.test(text[p])) p++;
+        if (text[p] !== "{") break;
+        const g = readBalanced(text, p);
+        grp += "{" + g + "}";
+        p = p + 1 + g.length + 1;
+      }
+      defs.set(name, text.slice(start, p));
+      continue;
+    }
+    while (p < text.length && text[p] === "[") {
+      let q = p + 1;
+      let depth = 1;
+      while (q < text.length && depth > 0) {
+        if (text[q] === "[") depth++;
+        else if (text[q] === "]") depth--;
+        q++;
+      }
+      p = q;
+    }
+    if (text[p] !== "{") continue;
+    const body = readBalanced(text, p);
+    const closeIdx = p + 1 + body.length;
+    let full = text.slice(start, closeIdx + 1);
+    full = full.replace(/^\\(re)?newcommand(\*?)/, "\\providecommand$2");
+    defs.set(name, full);
+  }
+  return Array.from(defs.values()).join("\n");
+}
+
 // ---------- read paper ----------
 const tex = fs.readFileSync(PAPER, "utf8");
 const docBegin = tex.indexOf("\\begin{document}");
-const titleIdx = tex.indexOf("\\title{");
-const preamble = tex.slice(0, docBegin); // lines 1..157
-const prelude = tex.slice(docBegin + "\\begin{document}".length, titleIdx); // macro/color defs in body
+const preamble = tex.slice(0, docBegin); // package preamble
+const bodyText = tex.slice(
+  docBegin + "\\begin{document}".length,
+  tex.indexOf("\\end{document}")
+);
+const defsBlock = scanDefs(removeTableRegions(bodyText));
 
 // ---------- extract active table* blocks ----------
 const tables = [];
@@ -106,7 +207,7 @@ tables.forEach((t, idx) => {
   const pdfPath = path.join(BUILD, `${base}.pdf`);
   const pngPath = path.join(OUT, `${base}.png`);
 
-  const standalone = `${preamble}\n\\begin{document}\n${prelude}\n${t.body}\n\\end{document}\n`;
+  const standalone = `${preamble}\n\\begin{document}\n${defsBlock}\n${t.body}\n\\end{document}\n`;
   fs.writeFileSync(texPath, standalone);
 
   try {

@@ -109,6 +109,48 @@ body {
   text-align: justify;
 }
 
+/* ---------- Comparison tables (3DGS-Survey style) ---------- */
+.paper-table {
+  max-width: 980px;
+  margin: 1.5rem auto 2.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.paper-table__head {
+  background: #f8fafc;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.paper-table__body {
+  background: #ffffff;
+}
+
+.paper-table__body img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.paper-table__caption {
+  padding: 10px 16px 14px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #555;
+  border-top: 1px solid #f1f5f9;
+}
+
+.paper-table__caption b {
+  color: #111827;
+}
+
 /* ---------- PDF figures ---------- */
 .pdf-figure {
   position: relative;

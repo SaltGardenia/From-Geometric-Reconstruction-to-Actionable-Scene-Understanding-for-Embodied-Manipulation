@@ -1,5 +1,6 @@
 import "./App.css";
 import { useState } from "react";
+import { TABLES } from "./tables-data";
 
 const PAPER_PDF = "/main.pdf";
 const ARXIV_URL = "https://arxiv.org/abs/0000.00000";
@@ -61,6 +62,23 @@ function SectionTitle({ children }) {
 
 function SectionIntro({ children }) {
   return <p className="content has-text-centered is-size-5 section-intro">{children}</p>;
+}
+
+function TableFigure({ index, src, caption }) {
+  return (
+    <figure className="paper-table">
+      <div className="paper-table__head">Table {index}</div>
+      <div className="paper-table__body">
+        <img src={src} alt={caption || `Table ${index}`} loading="lazy" />
+      </div>
+      {caption && (
+        <figcaption
+          className="paper-table__caption content is-size-6 has-text-left"
+          dangerouslySetInnerHTML={{ __html: caption }}
+        />
+      )}
+    </figure>
+  );
 }
 
 export default function App() {
@@ -309,6 +327,16 @@ export default function App() {
         />
 
         {/* Citation */}
+        {/* Comparison Tables */}
+        <SectionTitle>Comparison Tables</SectionTitle>
+        <SectionIntro>
+          We summarize representative datasets, evaluation metrics, and method
+          comparisons across the four capability layers of this survey.
+        </SectionIntro>
+        {TABLES.map((t, i) => (
+          <TableFigure key={i} index={i + 1} src={t.src} caption={t.caption} />
+        ))}
+
         <div className="card mt-6 cite-card" id="citation">
           <header className="card-header">
             <p className="card-header-title">Citation</p>

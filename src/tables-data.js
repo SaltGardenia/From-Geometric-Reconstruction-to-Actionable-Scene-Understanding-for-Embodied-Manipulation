@@ -9,6 +9,10 @@ export const TABLES = [
     "caption": "<b>Evaluation metrics for actionable indoor scene understanding.</b> Metrics are organized along the four capability layers of this survey, covering rendering and geometric quality, semantic and relational accuracy, physical plausibility, and task-level success."
   },
   {
+    "src": "/figures/tables/table3.png",
+    "caption": "Comparison of Semantic Understanding Paradigms for Indoor Scene Reconstruction. Each paradigm targets a distinct level of structural abstraction, from pixel-wise labeling to language-grounded scene modeling."
+  },
+  {
     "src": "/figures/tables/table4.png",
     "caption": "Core perspectives and representative advances in physical and functional understanding of indoor scenes."
   },
