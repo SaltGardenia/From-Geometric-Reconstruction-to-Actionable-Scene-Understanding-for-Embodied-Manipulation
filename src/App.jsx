@@ -14,7 +14,8 @@ const SECTIONS = [
   { id: "citation", label: "Citation" },
 ];
 
-const PAPER_PDF = "/main.pdf";
+const BASE = import.meta.env.BASE_URL;
+const PAPER_PDF = `${BASE}main.pdf`;
 const ARXIV_URL = "https://arxiv.org/abs/0000.00000";
 const CODE_URL = "https://github.com/";
 
@@ -26,7 +27,7 @@ const BIBTEX = `@article{li2026actionable,
 }`;
 
 function fig(name) {
-  return `/figures/${name}.png`;
+  return `${BASE}figures/${name}.png`;
 }
 
 function scrollToSection(id) {
