@@ -420,7 +420,18 @@ body {
   scroll-margin-top: 1.25rem;
 }
 
-@media (max-width: 1549px) {
+/* On genuinely wide screens, pin the TOC and back-to-top beside the
+   centered content column (1126px) instead of the screen edges. */
+@media (min-width: 1600px) {
+  .toc {
+    left: calc(50% - 563px - 200px);
+  }
+  .back-to-top {
+    right: calc(50% - 563px - 24px);
+  }
+}
+
+@media (max-width: 1599px) {
   .toc {
     display: none;
   }
