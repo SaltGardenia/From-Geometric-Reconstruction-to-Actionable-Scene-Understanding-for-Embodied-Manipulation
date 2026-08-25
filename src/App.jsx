@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TABLES_HTML } from "./tables-html";
 
 const SECTIONS = [
@@ -29,6 +29,11 @@ function fig(name) {
   return `/figures/${name}.png`;
 }
 
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
   const onCopy = async () => {
@@ -53,11 +58,195 @@ function CopyButton({ text }) {
   );
 }
 
-function PdfFigure({ src, caption }) {
+function ProgressBar() {
+  const barRef = useRef(null);
+  useEffect(() => {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const el = barRef.current;
+      if (!el) return;
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      el.style.transform = `scaleX(${p})`;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
   return (
-    <figure className="pdf-figure">
+    <div className="progress" aria-hidden="true">
+      <div className="progress__bar" ref={barRef} />
+    </div>
+  );
+}
+
+function TopBar({ sections, activeId }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <header className="topbar">
+      <span className="topbar__title">
+        Actionable Scene Understanding · Survey
+      </span>
+      <nav className="topbar__actions" aria-label="Page links">
+        <a
+          className="topbar__link"
+          href={PAPER_PDF}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Paper
+        </a>
+        <a
+          className="topbar__link"
+          href={ARXIV_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          arXiv
+        </a>
+        <a
+          className="topbar__link"
+          href={CODE_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Code
+        </a>
+        <button
+          type="button"
+          className="topbar__link topbar__menu-btn"
+          aria-haspopup="true"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <ion-icon name="list-outline"></ion-icon> 目录
+        </button>
+      </nav>
+      <div
+        className={`contents${open ? " is-open" : ""}`}
+        ref={ref}
+        role="menu"
+        aria-label="Table of contents"
+      >
+        {sections.map((s) => (
+          <a
+            key={s.id}
+            role="menuitem"
+            href={`#${s.id}`}
+            className={activeId === s.id ? "is-active" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(false);
+              scrollToSection(s.id);
+            }}
+          >
+            <span className="toc__dot" />
+            {s.label}
+          </a>
+        ))}
+      </div>
+    </header>
+  );
+}
+
+function Lightbox({ src, caption, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    const onScroll = () => onClose();
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Figure preview"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        className="lightbox__close"
+        aria-label="Close"
+        onClick={onClose}
+      >
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+      <img
+        className="lightbox__img"
+        src={src}
+        alt={typeof caption === "string" ? caption : "figure"}
+        onClick={(e) => e.stopPropagation()}
+      />
+      {caption && <figcaption className="lightbox__caption">{caption}</figcaption>}
+    </div>
+  );
+}
+
+function PdfFigure({ src, caption, onOpen }) {
+  const clickable = !!onOpen;
+  const open = () => onOpen && onOpen(src, caption);
+  return (
+    <figure
+      className={`pdf-figure${clickable ? " is-clickable" : ""}`}
+      onClick={clickable ? open : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                open();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="pdf-frame">
         <img src={src} alt={caption || "figure"} loading="lazy" />
+        {clickable && (
+          <span className="pdf-figure__zoom" aria-hidden="true">
+            <ion-icon name="expand-outline"></ion-icon>
+          </span>
+        )}
       </div>
       {caption && (
         <figcaption className="pdf-figure__caption content is-size-6 has-text-left">
@@ -68,13 +257,60 @@ function PdfFigure({ src, caption }) {
   );
 }
 
+function fixDatasetHeader(html) {
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const tableEl = doc.querySelector("table");
+    const thead = tableEl && tableEl.querySelector("thead");
+    const tbody = tableEl && tableEl.querySelector("tbody");
+    if (thead && tbody) {
+      const firstRow = tbody.querySelector("tr");
+      if (firstRow) {
+        // Only the cells that actually carry a label (RGB, Depth, ... Lang.)
+        // are real header cells. The row also contains 6 empty placeholder
+        // <td>s that merely fill columns already covered by rowspans; moving
+        // those in would create extra phantom columns and overflow the table.
+        const subHeader = doc.createElement("tr");
+        firstRow.querySelectorAll("td").forEach((td) => {
+          if (td.textContent.trim() !== "") subHeader.appendChild(td);
+        });
+        thead.appendChild(subHeader);
+        firstRow.remove();
+      }
+      return tableEl.outerHTML;
+    }
+  } catch {
+    /* fall back to original markup */
+  }
+  return html;
+}
+
 function HtmlTable({ table }) {
+  const bodyRef = useRef(null);
+  const tableHtml =
+    table.index === 1 ? fixDatasetHeader(table.html) : table.html;
+
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (!el || table.index !== 1) return;
+    const measure = () => {
+      const tr = el.querySelector("thead tr:first-child");
+      if (tr) el.style.setProperty("--header-h", `${tr.offsetHeight}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [table.index, tableHtml]);
+
   return (
     <figure className="paper-table">
       <div className="paper-table__head">Table {table.index}</div>
       <div
+        ref={bodyRef}
         className="paper-table__body"
-        dangerouslySetInnerHTML={{ __html: table.html }}
+        id={`tbl-${table.index}`}
+        dangerouslySetInnerHTML={{ __html: tableHtml }}
       />
       {table.caption && (
         <figcaption
@@ -94,40 +330,20 @@ function TablesForSection({ section }) {
 
 function SectionTitle({ id, children }) {
   return (
-    <p id={id} className="title is-3 mt-6 has-text-centered section-title">
+    <p
+      id={id}
+      className="title is-3 mt-6 has-text-centered section-title"
+    >
       {children}
     </p>
   );
 }
 
 function SectionIntro({ children }) {
-  return <p className="content has-text-centered is-size-5 section-intro">{children}</p>;
-}
-
-function Toc({ sections, activeId }) {
   return (
-    <nav className="toc" aria-label="Table of contents">
-      <span className="toc__title">Contents</span>
-      <ul>
-        {sections.map((s) => (
-          <li key={s.id}>
-            <a
-              href={`#${s.id}`}
-              className={activeId === s.id ? "is-active" : ""}
-              onClick={(e) => {
-                e.preventDefault();
-                document
-                  .getElementById(s.id)
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            >
-              <span className="toc__dot" />
-              <span className="toc__label">{s.label}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <p className="content has-text-centered is-size-5 section-intro">
+      {children}
+    </p>
   );
 }
 
@@ -153,6 +369,7 @@ function BackToTop() {
 
 export default function App() {
   const [activeId, setActiveId] = useState(SECTIONS[0].id);
+  const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
     let ticking = false;
@@ -192,280 +409,289 @@ export default function App() {
     };
   }, []);
 
+  const openLightbox = (src, caption) => setLightbox({ src, caption });
+
   return (
     <>
-      <Toc sections={SECTIONS} activeId={activeId} />
+      <ProgressBar />
+      <TopBar sections={SECTIONS} activeId={activeId} />
       <BackToTop />
       <section className="section">
-      <div className="container has-text-centered">
-        <p className="title is-3 paper-title">
-          From Geometric Reconstruction to Actionable Scene Understanding for
-          Embodied Manipulation: A Survey
-        </p>
+        <div className="container has-text-centered">
+          <p className="title is-3 paper-title reveal">
+            From Geometric Reconstruction to Actionable Scene Understanding for
+            Embodied Manipulation: A Survey
+          </p>
 
-        <p className="subtitle is-5 paper-venue">Preprint &middot; 2026</p>
+          <p className="subtitle is-5 paper-venue reveal d1">Preprint &middot; 2026</p>
 
-        <p className="title is-5 mt-2 authors">
-          <a href="https://saltgardenia.github.io/" target="_blank" rel="noreferrer">Yaze Li</a>
-          <sup>&dagger;</sup>,{" "}
-          <a href="mailto:2024218501@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Xinyu Xie</a>
-          <sup>&dagger;</sup>,{" "}
-          <a href="mailto:2024218545@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Jiawei Ma</a>
-          <sup>&dagger;</sup>,{" "}
-          <a href="mailto:2024218492@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Siying Song</a>
-          <sup>&dagger;</sup>,{" "}
-          <a href="mailto:haihong@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Haihong Xiao</a>
-          <sup>*</sup>
-        </p>
+          <p className="title is-5 mt-2 authors reveal d2">
+            <a href="https://saltgardenia.github.io/" target="_blank" rel="noreferrer">Yaze Li</a>
+            <sup>&dagger;</sup>,{" "}
+            <a href="mailto:2024218501@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Xinyu Xie</a>
+            <sup>&dagger;</sup>,{" "}
+            <a href="mailto:2024218545@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Jiawei Ma</a>
+            <sup>&dagger;</sup>,{" "}
+            <a href="mailto:2024218492@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Siying Song</a>
+            <sup>&dagger;</sup>,{" "}
+            <a href="mailto:haihong@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Haihong Xiao</a>
+            <sup>*</sup>
+          </p>
 
-        <p className="subtitle is-6 affiliation">
-          School of Computer Science and Information Engineering, Hefei University
-          of Technology, Hefei, China
-          <br />
-          <span className="muted">
-            <sup>&dagger;</sup> Equal contribution &nbsp;&middot;&nbsp;{" "}
-            <sup>*</sup> Corresponding author
-          </span>
-        </p>
-
-        <div className="is-flex is-justify-content-center is-flex-wrap-wrap link-row">
-          <span className="icon-text mx-1">
-            <a className="button is-dark" href={PAPER_PDF} target="_blank" rel="noreferrer">
-              <span className="icon">
-                <ion-icon name="document-outline"></ion-icon>
-              </span>
-              <span> Paper </span>
-            </a>
-          </span>
-          <span className="icon-text mx-1">
-            <a className="button is-dark" href={ARXIV_URL} target="_blank" rel="noreferrer">
-              <span className="icon">
-                <ion-icon name="library-outline"></ion-icon>
-              </span>
-              <span> arXiv </span>
-            </a>
-          </span>
-          <span className="icon-text mx-1">
-            <a className="button is-dark" href={CODE_URL} target="_blank" rel="noreferrer">
-              <span className="icon">
-                <ion-icon name="logo-github"></ion-icon>
-              </span>
-              <span> Code </span>
-            </a>
-          </span>
-          <span className="icon-text mx-1">
-            <a className="button is-dark" href="#citation" rel="noreferrer">
-              <span className="icon">
-                <ion-icon name="copy-outline"></ion-icon>
-              </span>
-              <span> Cite </span>
-            </a>
-          </span>
-        </div>
-      </div>
-
-      <div className="container is-max-desktop has-text-centered">
-        {/* Framework overview */}
-        <div id="overview" className="anchor-section">
-        <PdfFigure
-          label="Unified Framework"
-          src={fig("fig_framework")}
-          ratio={1.55}
-          caption={
-            <span>
-              <b>
-                Unified hierarchical framework of actionable scene understanding
-                for embodied indoor manipulation.
-              </b>{" "}
-              This bottom-up framework rests on a shared data and simulation
-              substrate, and stacks four progressively enhanced representation
-              layers: geometric reconstruction establishes spatial structure
-              (where), semantic understanding attaches interpretable identities
-              and relations (what), physical and functional understanding
-              provides interaction basis and constraints (how), and unified
-              embodied modeling enables predictive planning and executable
-              behaviors (what if and do). Cross-cutting dimensions including
-              dynamic scenes, multi-agent systems and evaluation protocols run
-              through all layers, and a perception–action feedback loop closes
-              the cycle by updating scene representations with interaction
-              outcomes.
+          <p className="subtitle is-6 affiliation reveal d3">
+            School of Computer Science and Information Engineering, Hefei University
+            of Technology, Hefei, China
+            <br />
+            <span className="muted">
+              <sup>&dagger;</sup> Equal contribution &nbsp;&middot;&nbsp;{" "}
+              <sup>*</sup> Corresponding author
             </span>
-          }
-        />
-        </div>
+          </p>
 
-        {/* Abstract */}
-        <SectionTitle id="abstract">Abstract</SectionTitle>
-        <p className="content is-size-6 has-text-left abstract">
-          Recent advances in 3D vision and embodied intelligence are driving a
-          transition in indoor scene understanding from geometric reconstruction
-          toward representations that support reasoning and physical
-          interaction. While existing methods can recover scene geometry and
-          semantic information, embodied agents require a deeper understanding
-          of functional and physical properties, as well as the ability to
-          predict the consequences of actions. This survey reviews the evolution
-          of indoor scene understanding from 3D reconstruction to actionable
-          scene understanding for embodied manipulation, encompassing geometric
-          reconstruction, semantic understanding, functional and physical
-          understanding, and their integration into embodied intelligence. We
-          examine how scene representations have evolved from describing visible
-          structures to supporting semantic interpretation, functional and
-          physical reasoning, prediction, and action. Beyond summarizing existing
-          methods, we identify four emerging directions: inferring invisible
-          environmental states from visual observations, learning through
-          physical self-supervision, modeling latent human states, and extending
-          embodied intelligence from task completion toward human empowerment.
-          These directions highlight the need for physically grounded and
-          human-centered scene representations that better support embodied
-          reasoning, prediction, and action.
-        </p>
-
-        {/* Datasets and Evaluation */}
-        <SectionTitle id="datasets">Datasets &amp; Evaluation Metrics</SectionTitle>
-        <SectionIntro>
-          We review representative indoor scene datasets and the evaluation
-          protocols that measure each capability layer, from geometric and
-          semantic accuracy to physical plausibility and task-level success.
-        </SectionIntro>
-        <TablesForSection section="datasets" />
-
-        {/* Geometric Reconstruction */}
-        <SectionTitle id="geometric">Geometric Reconstruction</SectionTitle>
-        <SectionIntro>
-          We categorize indoor scene reconstruction into offline, feed-forward,
-          and online paradigms, tracing their chronological evolution from
-          explicit geometry to continuous, feed-forward scene representations.
-        </SectionIntro>
-        <PdfFigure
-          label="Taxonomy & Evolution"
-          src={fig("fig2")}
-          ratio={1.5}
-          caption={
-            "Taxonomy and chronological evolution of indoor scene reconstruction. Offline reconstruction, feed-forward reconstruction, and online reconstruction are organized as the three major paradigms, with representative methods arranged chronologically within their corresponding technical families."
-          }
-        />
-        <PdfFigure
-          label="Representative Results"
-          src={fig("fig3v12")}
-          ratio={1.5}
-          caption={
-            "Representative examples of offline, feed-forward, and online 3D reconstruction paradigms."
-          }
-        />
-
-        {/* Semantic Understanding */}
-        <SectionTitle id="semantic">Semantic Understanding</SectionTitle>
-        <SectionIntro>
-          Reconstructed geometry is progressively transformed into structured
-          semantic representations—from object-level perception and relational
-          modeling to open-vocabulary understanding and unified
-          geometry–semantic representations.
-        </SectionIntro>
-        <TablesForSection section="semantic" />
-        <PdfFigure
-          label="Semantic Evolution"
-          src={fig("semantic_evo")}
-          ratio={1.5}
-          caption={
-            <span>
-              This four-layer bottom-up framework progressively transforms
-              reconstructed 3D geometry into structured semantic representations,
-              evolving from object-level perception and relational modeling to
-              open-vocabulary semantic understanding and unified geometry–semantic
-              representation. It establishes the semantic foundation for
-              subsequent physical and functional reasoning, thereby bridging
-              geometric scene reconstruction and actionable scene understanding
-              for embodied manipulation.
+          <div className="is-flex is-justify-content-center is-flex-wrap-wrap link-row reveal d4">
+            <span className="icon-text mx-1">
+              <a className="button is-dark" href={PAPER_PDF} target="_blank" rel="noreferrer">
+                <span className="icon">
+                  <ion-icon name="document-outline"></ion-icon>
+                </span>
+                <span> Paper </span>
+              </a>
             </span>
-          }
-        />
-
-        {/* Physical and Functional Understanding */}
-        <SectionTitle id="physical">Physical &amp; Functional Understanding</SectionTitle>
-        <SectionIntro>
-          Beyond appearance and semantics, agents must reason about physical
-          properties, affordances, interaction consequences, and physical
-          consistency to act reliably in the real world.
-        </SectionIntro>
-        <TablesForSection section="physical" />
-        <PdfFigure
-          label="Pipeline"
-          src={fig("fig4b")}
-          ratio={1.4}
-          caption={
-            "Pipeline for generating physically grounded, simulation-ready object representations from visual observations."
-          }
-        />
-        <PdfFigure
-          label="Conceptual Framework"
-          src={fig("fig4a")}
-          ratio={1.4}
-          caption={
-            "Conceptual framework for physical and functional understanding of indoor scenes."
-          }
-        />
-
-        {/* Executable Embodied Manipulation */}
-        <SectionTitle id="executable">Executable Embodied Manipulation</SectionTitle>
-        <SectionIntro>
-          The upper layers integrate multimodal reasoning, spatial and task-level
-          decision making, action generation, and predictive modeling into unified
-          embodied agents that close the perception–action loop.
-        </SectionIntro>
-        <TablesForSection section="embodied" />
-        <PdfFigure
-          label="Embodied Intelligence"
-          src={fig("fig_embodied_intelligence")}
-          ratio={1.5}
-          caption={
-            "Executable embodied manipulation integrates multimodal scene reasoning, decision making, action generation, and predictive modeling into a closed perception–action loop."
-          }
-        />
-        <PdfFigure
-          label="Unified Modeling"
-          src={fig("embodied_unified_modeling")}
-          ratio={1.5}
-          caption={
-            "Unified embodied modeling toward generalist embodied agents that map multimodal perception to manipulation."
-          }
-        />
-
-        {/* Future Directions */}
-        <SectionTitle id="future">Conclusion &amp; Future Directions</SectionTitle>
-        <SectionIntro>
-          We highlight four emerging directions that point toward physically
-          grounded and human-centered scene representations.
-        </SectionIntro>
-        <PdfFigure
-          label="Future Directions"
-          src={fig("fig_future_directions")}
-          ratio={1.3}
-          caption={
-            "Four future directions for embodied indoor scene understanding: inferring invisible environmental states, learning through physical self-supervision, modeling latent human states, and extending embodied intelligence from task completion toward human empowerment."
-          }
-        />
-
-        {/* Citation */}
-        {/* Comparison Tables (rendered as HTML in their sections above) */}
-
-        <div className="card mt-6 cite-card" id="citation">
-          <header className="card-header">
-            <p className="card-header-title">Citation</p>
-            <CopyButton text={BIBTEX} />
-          </header>
-          <div className="card-content has-text-left">
-            <pre className="bibtex">
-              <code>{BIBTEX}</code>
-            </pre>
+            <span className="icon-text mx-1">
+              <a className="button is-dark" href={ARXIV_URL} target="_blank" rel="noreferrer">
+                <span className="icon">
+                  <ion-icon name="library-outline"></ion-icon>
+                </span>
+                <span> arXiv </span>
+              </a>
+            </span>
+            <span className="icon-text mx-1">
+              <a className="button is-dark" href={CODE_URL} target="_blank" rel="noreferrer">
+                <span className="icon">
+                  <ion-icon name="logo-github"></ion-icon>
+                </span>
+                <span> Code </span>
+              </a>
+            </span>
+            <span className="icon-text mx-1">
+              <a className="button is-dark" href="#citation" rel="noreferrer">
+                <span className="icon">
+                  <ion-icon name="copy-outline"></ion-icon>
+                </span>
+                <span> Cite </span>
+              </a>
+            </span>
           </div>
         </div>
 
-        <p className="footer-note mt-6">
-          &copy; 2026 Survey Project Page &middot; Built with React &amp; Bulma,
-          inspired by the DreamGaussian project page.
-        </p>
-      </div>
-    </section>
+        <div className="container is-max-desktop has-text-centered">
+          <div id="overview" className="anchor-section">
+            <PdfFigure
+              label="Unified Framework"
+              src={fig("fig_framework")}
+              ratio={1.55}
+              caption={
+                <span>
+                  <b>
+                    Unified hierarchical framework of actionable scene understanding
+                    for embodied indoor manipulation.
+                  </b>{" "}
+                  This bottom-up framework rests on a shared data and simulation
+                  substrate, and stacks four progressively enhanced representation
+                  layers: geometric reconstruction establishes spatial structure
+                  (where), semantic understanding attaches interpretable identities
+                  and relations (what), physical and functional understanding
+                  provides interaction basis and constraints (how), and unified
+                  embodied modeling enables predictive planning and executable
+                  behaviors (what if and do). Cross-cutting dimensions including
+                  dynamic scenes, multi-agent systems and evaluation protocols run
+                  through all layers, and a perception–action feedback loop closes
+                  the cycle by updating scene representations with interaction
+                  outcomes.
+                </span>
+              }
+              onOpen={openLightbox}
+            />
+          </div>
+
+          <SectionTitle id="abstract">Abstract</SectionTitle>
+          <p className="content is-size-6 has-text-left abstract">
+            Recent advances in 3D vision and embodied intelligence are driving a
+            transition in indoor scene understanding from geometric reconstruction
+            toward representations that support reasoning and physical
+            interaction. While existing methods can recover scene geometry and
+            semantic information, embodied agents require a deeper understanding
+            of functional and physical properties, as well as the ability to
+            predict the consequences of actions. This survey reviews the evolution
+            of indoor scene understanding from 3D reconstruction to actionable
+            scene understanding for embodied manipulation, encompassing geometric
+            reconstruction, semantic understanding, functional and physical
+            understanding, and their integration into embodied intelligence. We
+            examine how scene representations have evolved from describing visible
+            structures to supporting semantic interpretation, functional and
+            physical reasoning, prediction, and action. Beyond summarizing existing
+            methods, we identify four emerging directions: inferring invisible
+            environmental states from visual observations, learning through
+            physical self-supervision, modeling latent human states, and extending
+            embodied intelligence from task completion toward human empowerment.
+            These directions highlight the need for physically grounded and
+            human-centered scene representations that better support embodied
+            reasoning, prediction, and action.
+          </p>
+
+          <SectionTitle id="datasets">Datasets &amp; Evaluation Metrics</SectionTitle>
+          <SectionIntro>
+            We review representative indoor scene datasets and the evaluation
+            protocols that measure each capability layer, from geometric and
+            semantic accuracy to physical plausibility and task-level success.
+          </SectionIntro>
+          <TablesForSection section="datasets" />
+
+          <SectionTitle id="geometric">Geometric Reconstruction</SectionTitle>
+          <SectionIntro>
+            We categorize indoor scene reconstruction into offline, feed-forward,
+            and online paradigms, tracing their chronological evolution from
+            explicit geometry to continuous, feed-forward scene representations.
+          </SectionIntro>
+          <PdfFigure
+            label="Taxonomy & Evolution"
+            src={fig("fig2")}
+            ratio={1.5}
+            caption={
+              "Taxonomy and chronological evolution of indoor scene reconstruction. Offline reconstruction, feed-forward reconstruction, and online reconstruction are organized as the three major paradigms, with representative methods arranged chronologically within their corresponding technical families."
+            }
+            onOpen={openLightbox}
+          />
+          <PdfFigure
+            label="Representative Results"
+            src={fig("fig3v12")}
+            ratio={1.5}
+            caption={
+              "Representative examples of offline, feed-forward, and online 3D reconstruction paradigms."
+            }
+            onOpen={openLightbox}
+          />
+
+          <SectionTitle id="semantic">Semantic Understanding</SectionTitle>
+          <SectionIntro>
+            Reconstructed geometry is progressively transformed into structured
+            semantic representations—from object-level perception and relational
+            modeling to open-vocabulary understanding and unified
+            geometry–semantic representations.
+          </SectionIntro>
+          <TablesForSection section="semantic" />
+          <PdfFigure
+            label="Semantic Evolution"
+            src={fig("semantic_evo")}
+            ratio={1.5}
+            caption={
+              <span>
+                This four-layer bottom-up framework progressively transforms
+                reconstructed 3D geometry into structured semantic representations,
+                evolving from object-level perception and relational modeling to
+                open-vocabulary semantic understanding and unified geometry–semantic
+                representation. It establishes the semantic foundation for
+                subsequent physical and functional reasoning, thereby bridging
+                geometric scene reconstruction and actionable scene understanding
+                for embodied manipulation.
+              </span>
+            }
+            onOpen={openLightbox}
+          />
+
+          <SectionTitle id="physical">Physical &amp; Functional Understanding</SectionTitle>
+          <SectionIntro>
+            Beyond appearance and semantics, agents must reason about physical
+            properties, affordances, interaction consequences, and physical
+            consistency to act reliably in the real world.
+          </SectionIntro>
+          <TablesForSection section="physical" />
+          <PdfFigure
+            label="Pipeline"
+            src={fig("fig4b")}
+            ratio={1.4}
+            caption={
+              "Pipeline for generating physically grounded, simulation-ready object representations from visual observations."
+            }
+            onOpen={openLightbox}
+          />
+          <PdfFigure
+            label="Conceptual Framework"
+            src={fig("fig4a")}
+            ratio={1.4}
+            caption={
+              "Conceptual framework for physical and functional understanding of indoor scenes."
+            }
+            onOpen={openLightbox}
+          />
+
+          <SectionTitle id="executable">Executable Embodied Manipulation</SectionTitle>
+          <SectionIntro>
+            The upper layers integrate multimodal reasoning, spatial and task-level
+            decision making, action generation, and predictive modeling into unified
+            embodied agents that close the perception–action loop.
+          </SectionIntro>
+          <TablesForSection section="embodied" />
+          <PdfFigure
+            label="Embodied Intelligence"
+            src={fig("fig_embodied_intelligence")}
+            ratio={1.5}
+            caption={
+              "Executable embodied manipulation integrates multimodal scene reasoning, decision making, action generation, and predictive modeling into a closed perception–action loop."
+            }
+            onOpen={openLightbox}
+          />
+          <PdfFigure
+            label="Unified Modeling"
+            src={fig("embodied_unified_modeling")}
+            ratio={1.5}
+            caption={
+              "Unified embodied modeling toward generalist embodied agents that map multimodal perception to manipulation."
+            }
+            onOpen={openLightbox}
+          />
+
+          <SectionTitle id="future">Conclusion &amp; Future Directions</SectionTitle>
+          <SectionIntro>
+            We highlight four emerging directions that point toward physically
+            grounded and human-centered scene representations.
+          </SectionIntro>
+          <PdfFigure
+            label="Future Directions"
+            src={fig("fig_future_directions")}
+            ratio={1.3}
+            caption={
+              "Four future directions for embodied indoor scene understanding: inferring invisible environmental states, learning through physical self-supervision, modeling latent human states, and extending embodied intelligence from task completion toward human empowerment."
+            }
+            onOpen={openLightbox}
+          />
+
+          <div className="card mt-6 cite-card" id="citation">
+            <header className="card-header">
+              <p className="card-header-title">Citation</p>
+              <CopyButton text={BIBTEX} />
+            </header>
+            <div className="card-content has-text-left">
+              <pre className="bibtex">
+                <code>{BIBTEX}</code>
+              </pre>
+            </div>
+          </div>
+
+          <p className="footer-note mt-6">
+            &copy; 2026 Survey Project Page &middot; Built with React &amp; Bulma,
+            inspired by the DreamGaussian project page.
+          </p>
+        </div>
+      </section>
+
+      {lightbox && (
+        <Lightbox
+          src={lightbox.src}
+          caption={lightbox.caption}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </>
   );
 }
