@@ -11,7 +11,6 @@ const SECTIONS = [
   { id: "physical", label: "Physical & Functional" },
   { id: "executable", label: "Executable Manipulation" },
   { id: "future", label: "Conclusion & Future" },
-  { id: "tables", label: "Comparison Tables" },
   { id: "citation", label: "Citation" },
 ];
 
