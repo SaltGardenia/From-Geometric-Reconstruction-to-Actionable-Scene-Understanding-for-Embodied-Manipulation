@@ -67,7 +67,7 @@ export default function App() {
   return (
     <section className="section">
       <div className="container has-text-centered">
-        <p className="title is-2 paper-title">
+        <p className="title is-3 paper-title">
           From Geometric Reconstruction to Actionable Scene Understanding for
           Embodied Manipulation: A Survey
         </p>

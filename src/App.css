@@ -31,10 +31,10 @@ body {
 
 /* ---------- Header ---------- */
 .paper-title {
-  font-weight: 800 !important;
-  font-size: 2.1rem !important;
+  font-weight: 700 !important;
+  font-size: 2rem !important;
   line-height: 1.25 !important;
-  max-width: 18em;
+  max-width: 20em;
   margin: 0 auto !important;
   letter-spacing: -0.01em;
 }
@@ -86,7 +86,7 @@ body {
 
 /* ---------- Section titles ---------- */
 .section-title {
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: -0.01em;
   margin-top: 3.5rem !important;
   padding-top: 1rem;
