@@ -3,126 +3,54 @@
   flex: 1;
 }
 
-/* ---------- Top bar ---------- */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  height: var(--topbar-h);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0 1.25rem;
-  background: var(--bar);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border-bottom: 1px solid var(--bar-border);
-}
-
-.topbar__title {
-  flex: 1;
-  min-width: 0;
-  font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
-  color: var(--fg);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.topbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-.topbar__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.65rem;
-  border: none;
-  background: transparent;
-  border-radius: 980px;
-  color: var(--fg-2);
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.18s var(--ease-out), color 0.18s var(--ease-out);
-}
-
-.topbar__link:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.topbar__link ion-icon {
-  font-size: 1rem;
-}
-
-.topbar__menu-btn[aria-expanded="true"] {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-@media (max-width: 640px) {
-  .topbar__link:not(.topbar__menu-btn) {
-    display: none;
-  }
-}
-
-/* ---------- Contents dropdown ---------- */
-.contents {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 1.25rem;
-  width: 280px;
-  max-width: calc(100vw - 2rem);
-  padding: 0.5rem;
+/* ---------- Floating side TOC ---------- */
+.toc-side {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  left: max(0.75rem, calc((100vw - 980px) / 2 - 212px));
+  width: 196px;
+  display: none;
+  flex-direction: column;
+  gap: 0.15rem;
+  z-index: 90;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
   background: var(--bar);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transform: translateY(-8px) scale(0.98);
-  transform-origin: top right;
-  pointer-events: none;
-  transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out);
+  box-shadow: var(--shadow-md);
 }
 
-.contents.is-open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
+@media (min-width: 1440px) {
+  .toc-side {
+    display: flex;
+  }
 }
 
-.contents a {
+.toc-side__link {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.55rem 0.7rem;
+  padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
   color: var(--fg-2);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1.3;
   transition: background 0.15s var(--ease-out), color 0.15s var(--ease-out);
 }
 
-.contents a:hover {
+.toc-side__link:hover {
   background: var(--accent-soft);
   color: var(--accent);
 }
 
-.contents a.is-active {
+.toc-side__link.is-active {
   color: var(--accent);
   font-weight: 600;
+  background: var(--accent-soft);
 }
 
 .toc__dot {
@@ -134,7 +62,7 @@
   transition: background 0.18s var(--ease-out), transform 0.18s var(--ease-out);
 }
 
-.contents a.is-active .toc__dot {
+.toc-side__link.is-active .toc__dot {
   background: var(--accent);
   transform: scale(1.25);
 }
@@ -142,7 +70,7 @@
 /* ---------- Reading progress ---------- */
 .progress {
   position: fixed;
-  top: var(--topbar-h);
+  top: 0;
   left: 0;
   right: 0;
   height: 2px;
@@ -323,6 +251,7 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   vertical-align: middle;
+  text-align: center;
   white-space: normal;
 }
 
@@ -352,7 +281,7 @@
   line-height: 1.5;
   background: var(--card);
   border-bottom: 1px solid var(--hairline);
-  vertical-align: top;
+  vertical-align: middle;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -408,6 +337,12 @@
   font-weight: 700;
 }
 
+.paper-table .neg {
+  color: #dc2626;
+  margin-right: 4px;
+  font-weight: 700;
+}
+
 .paper-table .cell {
   display: inline-block;
   line-height: 1.5;
@@ -431,27 +366,99 @@
   color: var(--fg);
 }
 
-/* Table 1: wide comparison table — widen modality columns, compact header,
-   so the narrow column headers no longer wrap/stack vertically. */
-#tbl-1 col:nth-child(1) { width: 8% !important; }
-#tbl-1 col:nth-child(2) { width: 5% !important; }
-#tbl-1 col:nth-child(3) { width: 7% !important; }
-#tbl-1 col:nth-child(n + 4):nth-child(-n + 12) { width: 4% !important; }
-#tbl-1 col:nth-child(13) { width: 8% !important; }
-#tbl-1 col:nth-child(14) { width: 8% !important; }
-#tbl-1 col:nth-child(15) { width: 28% !important; }
+/* symbol legend (Table 1 modality columns) */
+.paper-table__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  padding: 0 16px 14px;
+  font-size: 0.78rem;
+  color: var(--fg-2);
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+}
+
+.paper-table__legend .legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.paper-table__legend .legend-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.paper-table__legend .legend-mark.yes {
+  background: rgba(22, 163, 74, 0.14);
+  color: #16a34a;
+}
+
+.paper-table__legend .legend-mark.no {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+/* Table 1: very wide comparison table. Auto-size the columns and let the
+   table grow past the container so text is never crushed — it scrolls
+   horizontally instead. Content columns are capped so the table stays sane. */
+#tbl-1 {
+  overflow-x: auto;
+}
+
+#tbl-1 table {
+  table-layout: auto;
+  width: auto;
+  min-width: 100%;
+  font-size: 0.78rem;
+}
+
+#tbl-1 col {
+  width: auto !important;
+}
+
+/* readable widths for the text-heavy columns */
+#tbl-1 tbody td:nth-child(1),
+#tbl-1 thead td:nth-child(1) { min-width: 118px; } /* Dataset */
+#tbl-1 tbody td:nth-child(2),
+#tbl-1 thead td:nth-child(2) { min-width: 66px; } /* Year */
+#tbl-1 tbody td:nth-child(3),
+#tbl-1 thead td:nth-child(3) { min-width: 94px; } /* Scene Type */
+#tbl-1 tbody td:nth-child(13),
+#tbl-1 thead td:nth-child(13) { min-width: 140px; max-width: 184px; } /* Scene capability */
+#tbl-1 tbody td:nth-child(14),
+#tbl-1 thead td:nth-child(14) { min-width: 152px; max-width: 216px; } /* GT Method */
+#tbl-1 tbody td:nth-child(15),
+#tbl-1 thead td:nth-child(15) { min-width: 244px; max-width: 348px; } /* Description */
+
+/* modality symbol columns stay compact */
+#tbl-1 tbody td:nth-child(n + 4):nth-child(-n + 12),
+#tbl-1 thead td:nth-child(n + 4):nth-child(-n + 12) { min-width: 36px; }
 
 #tbl-1 thead td,
 #tbl-1 thead th {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   line-height: 1.3;
-  padding: 8px 6px;
+  padding: 9px 7px;
   vertical-align: middle;
 }
 
 #tbl-1 tbody td {
-  padding: 7px 9px;
+  padding: 8px 10px;
   vertical-align: middle;
+}
+
+/* second header row (modality sub-labels) slightly lighter than the group
+   header so the "Modalities" block reads clearly */
+#tbl-1 thead tr:nth-child(2) td {
+  background: color-mix(in srgb, var(--accent) 84%, #fff);
 }
 
 /* Modalities subgroup (cols 4-12): thin dividers between sub-columns,
@@ -484,6 +491,14 @@
 #tbl-1 thead tr:nth-child(2) td:nth-child(12) {
   box-shadow: inset 0 -2px 0 var(--accent-press),
     inset -2px 0 0 rgba(255, 255, 255, 0.35);
+}
+
+/* Table 3: header cells carry inline text-align:left, so center them
+   explicitly (inline styles need !important to override). */
+#tbl-3 thead td,
+#tbl-3 thead th {
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
 /* ---------- PDF figures ---------- */
@@ -573,9 +588,9 @@
   gap: 1rem;
   padding: 2rem max(1.5rem, env(safe-area-inset-right)) 2rem
     max(1.5rem, env(safe-area-inset-left));
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(8, 8, 10, 0.82);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
   opacity: 0;
   animation: lb-fade 0.25s var(--ease-out) forwards;
 }
@@ -583,6 +598,12 @@
 @keyframes lb-fade {
   to {
     opacity: 1;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lightbox {
+    background: rgba(8, 8, 10, 0.92);
   }
 }
 
@@ -750,7 +771,7 @@
 .anchor-section,
 .section-title,
 #citation {
-  scroll-margin-top: calc(var(--topbar-h) + 1rem);
+  scroll-margin-top: 1rem;
 }
 
 @media (max-width: 768px) {

@@ -17,7 +17,7 @@ const SECTIONS = [
 const BASE = import.meta.env.BASE_URL;
 const PAPER_PDF = `${BASE}main.pdf`;
 const ARXIV_URL = "https://arxiv.org/abs/0000.00000";
-const CODE_URL = "https://github.com/";
+const CODE_URL = "https://github.com/SaltGardenia/Actionable-Scene-Understanding";
 
 const BIBTEX = `@article{li2026actionable,
   title={From Geometric Reconstruction to Actionable Scene Understanding for Embodied Manipulation: A Survey},
@@ -93,90 +93,24 @@ function ProgressBar() {
   );
 }
 
-function TopBar({ sections, activeId }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
+function SideToc({ sections, activeId }) {
   return (
-    <header className="topbar">
-      <span className="topbar__title">
-        Actionable Scene Understanding · Survey
-      </span>
-      <nav className="topbar__actions" aria-label="Page links">
+    <nav className="toc-side" aria-label="Table of contents">
+      {sections.map((s) => (
         <a
-          className="topbar__link"
-          href={PAPER_PDF}
-          target="_blank"
-          rel="noreferrer"
+          key={s.id}
+          href={`#${s.id}`}
+          className={`toc-side__link${activeId === s.id ? " is-active" : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection(s.id);
+          }}
         >
-          Paper
+          <span className="toc__dot" />
+          {s.label}
         </a>
-        <a
-          className="topbar__link"
-          href={ARXIV_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          arXiv
-        </a>
-        <a
-          className="topbar__link"
-          href={CODE_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Code
-        </a>
-        <button
-          type="button"
-          className="topbar__link topbar__menu-btn"
-          aria-haspopup="true"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-        >
-          <ion-icon name="list-outline"></ion-icon> 目录
-        </button>
-      </nav>
-      <div
-        className={`contents${open ? " is-open" : ""}`}
-        ref={ref}
-        role="menu"
-        aria-label="Table of contents"
-      >
-        {sections.map((s) => (
-          <a
-            key={s.id}
-            role="menuitem"
-            href={`#${s.id}`}
-            className={activeId === s.id ? "is-active" : ""}
-            onClick={(e) => {
-              e.preventDefault();
-              setOpen(false);
-              scrollToSection(s.id);
-            }}
-          >
-            <span className="toc__dot" />
-            {s.label}
-          </a>
-        ))}
-      </div>
-    </header>
+      ))}
+    </nav>
   );
 }
 
@@ -319,6 +253,16 @@ function HtmlTable({ table }) {
           dangerouslySetInnerHTML={{ __html: table.caption }}
         />
       )}
+      {table.index === 1 && (
+        <div className="paper-table__legend content is-size-7 has-text-left">
+          <span className="legend-item">
+            <span className="legend-mark yes">✓</span> Supported
+          </span>
+          <span className="legend-item">
+            <span className="legend-mark no">✗</span> Not supported
+          </span>
+        </div>
+      )}
     </figure>
   );
 }
@@ -415,7 +359,7 @@ export default function App() {
   return (
     <>
       <ProgressBar />
-      <TopBar sections={SECTIONS} activeId={activeId} />
+      <SideToc sections={SECTIONS} activeId={activeId} />
       <BackToTop />
       <section className="section">
         <div className="container has-text-centered">

@@ -181,7 +181,7 @@ function inline(s) {
   s = s.replace(/\\xmark/g, "✗");
   s = s.replace(/\\ding\{51\}/g, "✓").replace(/\\ding\{55\}/g, "✗");
   s = s.replace(/\\posbar/g, "<span class='pos'>•</span>");
-  s = s.replace(/\\negbar/g, "");
+  s = s.replace(/\\negbar/g, "<span class='neg'>•</span>");
   s = s.replace(/\\arrayrulecolor(\[[^\]]*\])?\{[^}]*\}/g, "");
   s = s.replace(/\\rowcolors\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, "");
   s = s.replace(/\\addlinespace(\[[^\]]*\])?/g, "");
