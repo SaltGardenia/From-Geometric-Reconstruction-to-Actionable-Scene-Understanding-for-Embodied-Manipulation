@@ -201,6 +201,10 @@ function fixDatasetHeader(html) {
     if (thead && tbody) {
       const firstRow = tbody.querySelector("tr");
       if (firstRow) {
+        // Only the cells that actually carry a label (RGB, Depth, ... Lang.)
+        // are real header cells. The row also contains 6 empty placeholder
+        // <td>s that merely fill columns already covered by rowspans; moving
+        // those in would create extra phantom columns and overflow the table.
         const subHeader = doc.createElement("tr");
         firstRow.querySelectorAll("td").forEach((td) => {
           if (td.textContent.trim() !== "") subHeader.appendChild(td);
@@ -374,10 +378,10 @@ export default function App() {
             <sup>&dagger;</sup>,{" "}
             <a href="mailto:2024218492@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Siying Song</a>
             <sup>&dagger;</sup>,{" "}
-            <a href="mailto:jiananzou@example.com" target="_blank" rel="noreferrer">Jianan Zou</a>,{" "}
+            <a href="mailto:jiananzou@example.com" target="_blank" rel="noreferrer">Jianan Zou</a>
+            <sup>&dagger;</sup>,{" "}
             <a href="mailto:haihong@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Haihong Xiao</a>
-            <sup>*</sup>,{" "}
-            <a href="mailto:weijia@mail.hfut.edu.cn" target="_blank" rel="noreferrer">Wei Jia</a>
+            <sup>*</sup>
           </p>
 
           <p className="subtitle is-6 affiliation reveal d3">
@@ -455,28 +459,25 @@ export default function App() {
 
           <SectionTitle id="abstract">Abstract</SectionTitle>
           <p className="content is-size-6 has-text-left abstract">
-            Scene understanding for embodied manipulation must extend beyond describing
-            what exists in an environment to representing what can be acted upon, under
-            which physical constraints, and with what consequences. Existing surveys have
-            largely examined geometric reconstruction, semantic understanding, functional
-            reasoning, or embodied intelligence as separate research directions, leaving their
-            roles in task-oriented behavior insufficiently characterized. This survey presents
-            a unified perspective on actionable scene understanding for embodied manipulation,
-            where scene knowledge is organized according to its utility for task-conditioned
-            perception, physical reasoning, prediction, and action. We distinguish conventional
-            scene understanding, which primarily recovers geometric and semantic structure,
-            from actionable scene understanding, which additionally incorporates functional
-            affordances, physical properties and constraints, causal relations, and state
-            evolution. From this perspective, we review datasets and evaluation protocols,
-            geometric reconstruction, semantic understanding, physical and functional
-            understanding, and embodied scene modeling, while examining the gap between
-            perceptual fidelity and executable behavior. We further identify emerging directions
-            toward latent physical-state inference, interaction-driven scene updating, persistent
-            predictive scene modeling, and human-aware embodied understanding. By connecting
-            scene representation with action-conditioned prediction and closed-loop behavior,
-            this survey aims to provide a systematic view of how 3D scene understanding can
-            evolve from descriptive reconstruction toward executable scene knowledge.Project
-            page:
+            Humans perform diverse real-world tasks by progressively understanding
+            their surroundings, from perceiving spatial structure and recognizing
+            objects to reasoning about their functions and adapting to changing
+            task conditions. This hierarchical capability suggests that scene
+            understanding for embodied manipulation must extend beyond geometry and
+            semantics to capture the functional and physical properties that determine
+            how objects can be used and manipulated. Existing surveys, however,
+            have predominantly focused on individual aspects of scene understanding
+            and discussed their relevance to embodied intelligence from separate
+            perspectives. This survey presents scene understanding for embodied
+            manipulation from a unified perspective, spanning geometric reconstruction,
+            semantic understanding, functional and physical understanding, and
+            task-oriented manipulation. We further identify four emerging directions:
+            inferring invisible environmental states from visual observations,
+            learning through physical self-supervision, modeling latent human states
+            and emotions, and extending embodied intelligence from task completion
+            toward human-centered assistance. These directions underscore the
+            importance of physically grounded, adaptive, and human-centered scene
+            understanding for embodied manipulation. Project page:
             <a href="https://saltgardenia.github.io/Actionable-Scene-Understanding/"
               target="_blank" rel="noreferrer">
               https://saltgardenia.github.io/Actionable-Scene-Understanding/
@@ -485,40 +486,24 @@ export default function App() {
 
           <SectionTitle id="datasets">Datasets & Evaluation Metrics</SectionTitle>
           <SectionIntro>
-            Datasets and evaluation protocols determine not only which capabilities can be
-            learned, but also which aspects of scene understanding are considered successful.
-            Early indoor scene understanding benchmarks primarily evaluated geometric
-            reconstruction and localization, followed by semantic and instance-level
-            interpretation. More recent datasets incorporate functional parts, articulated
-            structures, interaction affordances, physical properties, temporal states, and
-            task-oriented supervision. This evolution reflects a broader shift from static
-            scene description toward embodied behavior. However, the capability layers are
-            still commonly annotated and evaluated in isolation. A central question for
-            actionable scene understanding is therefore not only which datasets or metrics
-            are available, but whether their supervision and evaluation preserve the
-            information required for downstream action. In this section, we provide a
-            comprehensive overview of existing datasets and their commonly adopted evaluation
-            protocols. We then discuss emerging evaluation directions and our preliminary
-            reflections on designing metrics that better reflect actionability.
+            We review representative indoor scene datasets and the evaluation
+            protocols that measure each capability layer, from geometric and
+            semantic accuracy to physical plausibility and task-level success.
           </SectionIntro>
           <TablesForSection section="datasets" />
 
           <SectionTitle id="geometric">Geometric Reconstruction</SectionTitle>
           <SectionIntro>
-            We survey geometric reconstruction methods, covering offline optimization,
-            feed-forward prediction, and online mapping, tracing their chronological
-            evolution from explicit geometry to continuous, feed-forward scene
-            representations.
+            We categorize indoor scene reconstruction into offline, feed-forward,
+            and online paradigms, tracing their chronological evolution from
+            explicit geometry to continuous, feed-forward scene representations.
           </SectionIntro>
           <PdfFigure
             label="Taxonomy & Evolution"
             src={fig("fig2")}
             ratio={1.5}
             caption={
-              `Taxonomy and chronological evolution of indoor scene reconstruction. Offline
-              reconstruction, feed-forward reconstruction, and online reconstruction are
-              organized as the three major paradigms, with representative methods arranged
-              chronologically within their corresponding technical families.`
+              "Taxonomy and chronological evolution of indoor scene reconstruction. Offline reconstruction, feed-forward reconstruction, and online reconstruction are organized as the three major paradigms, with representative methods arranged chronologically within their corresponding technical families."
             }
             onOpen={openLightbox}
           />
@@ -527,17 +512,17 @@ export default function App() {
             src={fig("fig3v12")}
             ratio={1.5}
             caption={
-              `Representative examples of offline, feed-forward, and online 3D reconstruction
-              paradigms.`
+              "Representative examples of offline, feed-forward, and online 3D reconstruction paradigms."
             }
             onOpen={openLightbox}
           />
 
           <SectionTitle id="semantic">Semantic Understanding</SectionTitle>
           <SectionIntro>
-            Reconstructed geometry is progressively transformed into structured semantic
-            representations—from object-level perception and relational modeling to
-            open-vocabulary understanding and unified geometry–semantic representations.
+            Reconstructed geometry is progressively transformed into structured
+            semantic representations—from object-level perception and relational
+            modeling to open-vocabulary understanding and unified
+            geometry–semantic representations.
           </SectionIntro>
           <TablesForSection section="semantic" />
           <PdfFigure
@@ -546,13 +531,14 @@ export default function App() {
             ratio={1.5}
             caption={
               <span>
-                This four-layer bottom-up framework progressively transforms reconstructed
-                3D geometry into structured semantic representations, evolving from
-                object-level perception and relational modeling to open-vocabulary semantic
-                understanding and unified geometry–semantic representation. It establishes
-                the semantic foundation for subsequent physical and functional reasoning,
-                thereby bridging geometric scene reconstruction and actionable scene
-                understanding for embodied manipulation.
+                This four-layer bottom-up framework progressively transforms
+                reconstructed 3D geometry into structured semantic representations,
+                evolving from object-level perception and relational modeling to
+                open-vocabulary semantic understanding and unified geometry–semantic
+                representation. It establishes the semantic foundation for
+                subsequent physical and functional reasoning, thereby bridging
+                geometric scene reconstruction and actionable scene understanding
+                for embodied manipulation.
               </span>
             }
             onOpen={openLightbox}
@@ -560,9 +546,9 @@ export default function App() {
 
           <SectionTitle id="physical">Physical & Functional Understanding</SectionTitle>
           <SectionIntro>
-            Beyond appearance and semantics, agents must reason about physical properties,
-            affordances, interaction consequences, and physical consistency to act reliably
-            in the real world.
+            Beyond appearance and semantics, agents must reason about physical
+            properties, affordances, interaction consequences, and physical
+            consistency to act reliably in the real world.
           </SectionIntro>
           <TablesForSection section="physical" />
           <PdfFigure
@@ -570,8 +556,7 @@ export default function App() {
             src={fig("fig4b")}
             ratio={1.4}
             caption={
-              `Pipeline for generating physically grounded, simulation-ready object
-              representations from visual observations.`
+              "Pipeline for generating physically grounded, simulation-ready object representations from visual observations."
             }
             onOpen={openLightbox}
           />
@@ -579,62 +564,50 @@ export default function App() {
             label="Conceptual Framework"
             src={fig("fig4a")}
             ratio={1.4}
-caption={
-               `Conceptual framework for physical and functional understanding of indoor
-               scenes.`
-             }
+            caption={
+              "Conceptual framework for physical and functional understanding of indoor scenes."
+            }
             onOpen={openLightbox}
           />
 
           <SectionTitle id="executable">Executable Embodied Manipulation</SectionTitle>
           <SectionIntro>
-            The upper layers integrate multimodal reasoning, spatial and task-level decision
-            making, action generation, and predictive modeling into unified embodied agents
-            that close the perception–action loop.
+            The upper layers integrate multimodal reasoning, spatial and task-level
+            decision making, action generation, and predictive modeling into unified
+            embodied agents that close the perception–action loop.
           </SectionIntro>
           <TablesForSection section="embodied" />
           <PdfFigure
             label="Embodied Intelligence"
             src={fig("fig_embodied_intelligence")}
             ratio={1.5}
-caption={
-               `Executable embodied manipulation integrates multimodal scene reasoning,
-               decision making, action generation, and predictive modeling into a closed
-               perception–action loop.`
-             }
+            caption={
+              "Executable embodied manipulation integrates multimodal scene reasoning, decision making, action generation, and predictive modeling into a closed perception–action loop."
+            }
             onOpen={openLightbox}
           />
           <PdfFigure
             label="Unified Modeling"
             src={fig("embodied_unified_modeling")}
             ratio={1.5}
-caption={
-               `Unified embodied modeling toward generalist embodied agents that map
-               multimodal perception to manipulation.`
-             }
+            caption={
+              "Unified embodied modeling toward generalist embodied agents that map multimodal perception to manipulation."
+            }
             onOpen={openLightbox}
           />
 
           <SectionTitle id="future">Conclusion & Future Directions</SectionTitle>
           <SectionIntro>
-            We highlight four emerging directions toward more capable scene representations:
-            inferring invisible states from visual observations, acquiring physical
-            knowledge through self-supervision, modeling latent human states, and shifting
-            from task completion to human-centered assistance. Collectively, these directions
-            point toward scene understanding that is geometrically and semantically grounded,
-            physically consistent, context-aware, and adaptive to complex real-world
-            environments.
+            We highlight four emerging directions that point toward physically
+            grounded and human-centered scene representations.
           </SectionIntro>
           <PdfFigure
             label="Future Directions"
             src={fig("fig_future_directions")}
             ratio={1.3}
-caption={
-               `Four future directions for embodied indoor scene understanding: inferring
-               invisible environmental states, learning through physical self-supervision,
-               modeling latent human states, and extending embodied intelligence from task
-               completion toward human empowerment.`
-             }
+            caption={
+              "Four future directions for embodied indoor scene understanding: inferring invisible environmental states, learning through physical self-supervision, modeling latent human states, and extending embodied intelligence from task completion toward human empowerment."
+            }
             onOpen={openLightbox}
           />
 

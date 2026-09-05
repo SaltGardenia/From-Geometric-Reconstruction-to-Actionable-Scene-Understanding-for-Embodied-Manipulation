@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[**Yaze Li**](https://saltgardenia.github.io/) <sup>†</sup> · [**Xinyu Xie**](mailto:2024218501@mail.hfut.edu.cn) <sup>†</sup> · [**Jiawei Ma**](mailto:2024218545@mail.hfut.edu.cn) <sup>†</sup> · [**Siying Song**](mailto:2024218492@mail.hfut.edu.cn) <sup>†</sup> · [**Haihong Xiao**](mailto:haihong@mail.hfut.edu.cn) <sup>∗</sup>
+[**Yaze Li**](https://saltgardenia.github.io/) <sup>†</sup> · [**Xinyu Xie**](mailto:2024218501@mail.hfut.edu.cn) <sup>†</sup> · [**Jiawei Ma**](mailto:2024218545@mail.hfut.edu.cn) <sup>†</sup> · [**Siying Song**](mailto:2024218492@mail.hfut.edu.cn) <sup>†</sup> · [**Jianan Zou**](mailto:jiananzou@example.com) · [**Haihong Xiao**](mailto:haihong@mail.hfut.edu.cn) <sup>∗</sup> · [**Wei Jia**](mailto:weijia@mail.hfut.edu.cn)
 
 *School of Computer Science and Information Engineering, Hefei University of Technology, Hefei, China*
 
